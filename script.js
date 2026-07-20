@@ -1,142 +1,172 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MoneyMate</title>
+let income = 0;
+let expenses = [];
+let chart;
 
-<link rel="stylesheet" href="style.css">
+// Save income and create automatic budget
+function saveIncome() {
+    income = Number(document.getElementById("income").value);
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    if (income <= 0) {
+        alert("Please enter your income.");
+        return;
+    }
 
-</head>
+    document.getElementById("balance").innerHTML =
+        "Balance: RM" + income;
 
-<body>
-
-<header>
-    <h1>💰 MoneyMate</h1>
-    <p>Your Smart Budget Assistant</p>
-</header>
-
-<div class="container">
-
-<!-- Income -->
-<div class="card">
-
-<h2>Receive Money</h2>
-
-<input
-id="income"
-type="number"
-placeholder="Enter Monthly Income">
-
-<button onclick="saveIncome()">
-Save Income
-</button>
-
-<h3 id="balance">
-Balance: RM0
-</h3>
-
-</div>
+    createBudget();
+    updateReport();
+    updateAdvice();
+}
 
 
-<!-- Budget -->
+// Automatic 50/30/20 style budget
+function createBudget() {
+    let rent = income * 0.30;
+    let food = income * 0.20;
+    let savings = income * 0.20;
+    let transport = income * 0.10;
+    let entertainment = income * 0.10;
 
-<div class="card">
+    document.getElementById("budgetList").innerHTML = `
+        <li>Rent : RM${rent.toFixed(2)}</li>
+        <li>Food : RM${food.toFixed(2)}</li>
+        <li>Savings : RM${savings.toFixed(2)}</li>
+        <li>Transport : RM${transport.toFixed(2)}</li>
+        <li>Entertainment : RM${entertainment.toFixed(2)}</li>
+    `;
 
-<h2>Automatic Budget</h2>
-
-<ul id="budgetList">
-
-<li>Rent : RM0</li>
-<li>Food : RM0</li>
-<li>Savings : RM0</li>
-<li>Transport : RM0</li>
-<li>Entertainment : RM0</li>
-
-</ul>
-
-<canvas id="budgetChart"></canvas>
-
-</div>
-
-
-<!-- Expense -->
-
-<div class="card">
-
-<h2>Track Spending</h2>
-
-<input
-id="expenseName"
-placeholder="Expense Name">
-
-<input
-id="expenseAmount"
-type="number"
-placeholder="Amount">
-
-<select id="expenseCategory">
-
-<option>Food</option>
-<option>Rent</option>
-<option>Transport</option>
-<option>Entertainment</option>
-<option>Others</option>
-
-</select>
-
-<button onclick="addExpense()">
-Add Expense
-</button>
-
-<ul id="expenseList">
-
-</ul>
-
-</div>
+    createChart([
+        rent,
+        food,
+        savings,
+        transport,
+        entertainment
+    ]);
+}
 
 
-<!-- AI Coach -->
+// Add expense
+function addExpense() {
 
-<div class="card">
+    let name = document.getElementById("expenseName").value;
+    let amount = Number(document.getElementById("expenseAmount").value);
+    let category = document.getElementById("expenseCategory").value;
 
-<h2>AI Coach</h2>
+    if (!name || amount <= 0) {
+        alert("Please enter expense details.");
+        return;
+    }
 
-<p id="advice">
+    expenses.push({
+        name: name,
+        amount: amount,
+        category: category
+    });
 
-Welcome to MoneyMate!
-
-</p>
-
-</div>
-
+    showExpenses();
+    updateReport();
+    updateAdvice();
+}
 
 
-<!-- Monthly Report -->
+// Show expense list
+function showExpenses() {
 
-<div class="card">
+    let list = document.getElementById("expenseList");
 
-<h2>Monthly Report</h2>
+    list.innerHTML = "";
 
-<p>Total Income:
-<span id="reportIncome">RM0</span>
-</p>
+    expenses.forEach(expense => {
 
-<p>Total Expenses:
-<span id="reportExpense">RM0</span>
-</p>
+        let item = document.createElement("li");
 
-<p>Remaining Balance:
-<span id="reportBalance">RM0</span>
-</p>
+        item.innerHTML =
+        expense.name + " - RM" +
+        expense.amount +
+        " (" + expense.category + ")";
 
-</div>
+        list.appendChild(item);
 
-</div>
+    });
+}
 
-<script src="script.js"></script>
 
-</body>
-</html>
+// Monthly report
+function updateReport() {
+
+    let totalExpense = expenses.reduce(
+        (sum, item) => sum + item.amount,
+        0
+    );
+
+    let balance = income - totalExpense;
+
+    document.getElementById("reportIncome").innerHTML =
+        "RM" + income;
+
+    document.getElementById("reportExpense").innerHTML =
+        "RM" + totalExpense;
+
+    document.getElementById("reportBalance").innerHTML =
+        "RM" + balance;
+
+    document.getElementById("balance").innerHTML =
+        "Balance: RM" + balance;
+}
+
+
+// AI Coach message
+function updateAdvice() {
+
+    let totalExpense = expenses.reduce(
+        (sum, item) => sum + item.amount,
+        0
+    );
+
+    let message =
+        "Good job! Keep tracking your money.";
+
+    if (totalExpense > income * 0.8) {
+        message =
+        "Warning: You are spending too much this month.";
+    }
+
+    document.getElementById("advice").innerHTML =
+        message;
+}
+
+
+// Chart
+function createChart(values) {
+
+    let ctx = document
+    .getElementById("budgetChart");
+
+    if (chart) {
+        chart.destroy();
+    }
+
+    chart = new Chart(ctx, {
+
+        type: "pie",
+
+        data: {
+
+            labels: [
+                "Rent",
+                "Food",
+                "Savings",
+                "Transport",
+                "Entertainment"
+            ],
+
+            datasets: [{
+                data: values
+            }]
+
+        }
+
+    });
+
+}
